@@ -5,6 +5,90 @@ const API_URL = 'https://dino-game-backend--lisofoxa.replit.app'; // ✅ ТВО�
 let authToken = localStorage.getItem('authToken');
 let currentUser = null;
 
+// ========== ТАЙМЕР КУЛДАУНА (из базы данных) ==========
+let cooldownTimer = null;
+let lastFedTime = null;
+const COOLDOWN_MINUTES = 5; // 5 минут кулдаун
+
+// Вычисляем оставшееся время до следующего кормления
+function calculateRemainingTime(lastFed) {
+    if (!lastFed) return null;
+    
+    const now = new Date();
+    const lastFedDate = new Date(lastFed);
+    const elapsedMinutes = (now - lastFedDate) / (1000 * 60);
+    const remainingMinutes = COOLDOWN_MINUTES - elapsedMinutes;
+    
+    return Math.max(0, remainingMinutes * 60 * 1000); // В миллисекундах
+}
+
+function startCooldownFromServer(lastFed) {
+    lastFedTime = lastFed ? new Date(lastFed) : null;
+    
+    if (!lastFedTime) {
+        stopCooldown();
+        return;
+    }
+    
+    const remaining = calculateRemainingTime(lastFed);
+    
+    if (remaining && remaining > 0) {
+        // Кулдаун ещё активен
+        updateCooldownUI(remaining);
+        
+        // Запускаем таймер для обновления интерфейса
+        if (cooldownTimer) clearInterval(cooldownTimer);
+        cooldownTimer = setInterval(() => {
+            const newRemaining = calculateRemainingTime(lastFedTime);
+            if (newRemaining && newRemaining > 0) {
+                updateCooldownUI(newRemaining);
+            } else {
+                stopCooldown();
+            }
+        }, 1000);
+    } else {
+        // Кулдаун закончился
+        stopCooldown();
+    }
+}
+
+function updateCooldownUI(remainingMilliseconds) {
+    const minutes = Math.floor(remainingMilliseconds / 60000);
+    const seconds = Math.floor((remainingMilliseconds % 60000) / 1000)
+                      .toString()
+                      .padStart(2, '0');
+    
+    // Обновляем интерфейс
+    const timerEl = document.getElementById('timer-value');
+    const cooldownEl = document.getElementById('cooldown-timer');
+    const feedBtn = document.getElementById('feed-btn');
+    
+    if (timerEl && cooldownEl && feedBtn) {
+        timerEl.textContent = `${minutes}:${seconds}`;
+        cooldownEl.style.display = 'flex';
+        cooldownEl.classList.add('active');
+        feedBtn.classList.add('cooldown');
+        feedBtn.disabled = true;
+    }
+}
+
+function stopCooldown() {
+    if (cooldownTimer) clearInterval(cooldownTimer);
+    cooldownTimer = null;
+    lastFedTime = null;
+    
+    // Обновляем интерфейс
+    const cooldownEl = document.getElementById('cooldown-timer');
+    const feedBtn = document.getElementById('feed-btn');
+    
+    if (cooldownEl && feedBtn) {
+        cooldownEl.style.display = 'none';
+        cooldownEl.classList.remove('active');
+        feedBtn.classList.remove('cooldown');
+        feedBtn.disabled = false;
+    }
+}
+
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
@@ -221,6 +305,8 @@ async function loadDinosaur() {
         
         if (response.ok) {
             displayDinosaur(data.dino);
+            // Запускаем кулдаун на основе данных из базы
+            startCooldownFromServer(data.dino.lastFed);
         } else {
             // Если токен невалидный
             if (data.error === 'Неверный или просроченный токен') {
@@ -247,15 +333,15 @@ function displayDinosaur(dino) {
     document.getElementById('xp-text').textContent = `${dino.xp} / ${dino.xpToNextLevel}`;
     document.getElementById('xp-progress').style.width = `${dino.xpProgress}%`;
     
-    // Изображение динозавра
+    // Изображение динозавра (НОВЫЕ КАРТИНКИ!)
     const imageMap = {
-        'compsognathus': 'https://i.imgur.com/JZvLxQl.png',
-        'triceratops': 'https://i.imgur.com/5XKzH9E.png',
-        'velociraptor': 'https://i.imgur.com/8WYVf9P.png',
-        'trex': 'https://i.imgur.com/QwZ3FgD.png'
+        'compsognathus': '/images/compy.png',
+        'triceratops': '/images/trike.png',
+        'velociraptor': '/images/raptor.png',
+        'trex': '/images/trex.png'
     };
     
-    document.getElementById('dino-image').src = imageMap[dino.species] || imageMap.compsognathus;
+    document.getElementById('dino-image').src = imageMap[dino.species] || '/images/compy.png';
 }
 
 // ========== КОРМЛЕНИЕ ==========
@@ -292,6 +378,9 @@ async function feedDinosaur() {
             // Обновить данные
             displayDinosaur(data.dino);
             
+            // Запустить кулдаун на основе данных из базы
+            startCooldownFromServer(data.dino.lastFed);
+            
             // Сообщение о кормлении
             showNotification(`+10 опыта! Прогресс: ${data.dino.xpProgress}%`, 'success', 'Динозавр накормлен');
             
@@ -306,7 +395,10 @@ async function feedDinosaur() {
             }
         } else {
             if (data.cooldown) {
+                // Сервер вернул кулдаун — обновляем интерфейс
                 showNotification(`Подождите ещё ${data.waitMinutes} минут(ы) до следующего кормления`, 'wait', 'Слишком рано');
+                // Обновляем данные из базы
+                loadDinosaur();
             } else {
                 showNotification(data.error || 'Не удалось покормить динозавра', 'error', 'Ошибка');
             }
