@@ -1,5 +1,5 @@
 // ========== КОНФИГУРАЦИЯ ==========
-const API_URL = 'https://dino-game-backend--lisofoxa.replit.app'; // ✅ ПРАВИЛЬНЫЙ URL
+const API_URL = 'https://dino-game-backend--lisofoxa.replit.app'; // ✅ ТВОЙ БЭКЕНД
 
 // ========== СОСТОЯНИЕ ==========
 let authToken = localStorage.getItem('authToken');
@@ -31,7 +31,7 @@ function setupEventListeners() {
     document.getElementById('feed-btn')?.addEventListener('click', feedDinosaur);
     document.getElementById('rename-btn')?.addEventListener('click', () => showModal('rename-modal'));
     
-    // Модальное окно
+    // Модальное окно переименования
     document.getElementById('save-name-btn')?.addEventListener('click', saveNewName);
     document.getElementById('cancel-name-btn')?.addEventListener('click', () => hideModal('rename-modal'));
     
@@ -41,6 +41,60 @@ function setupEventListeners() {
             e.target.classList.remove('active');
         }
     });
+}
+
+// ========== СИСТЕМА УВЕДОМЛЕНИЙ ==========
+function showNotification(message, type = 'info', title = null) {
+    const container = document.getElementById('notifications-container');
+    if (!container) return;
+    
+    // Иконки для разных типов
+    const icons = {
+        success: '✅',
+        info: 'ℹ️',
+        warning: '⚠️',
+        error: '❌',
+        wait: '⏳'
+    };
+    
+    // Цвета
+    const colors = {
+        success: '#4ade80',
+        info: '#3b82f6',
+        warning: '#fbbf24',
+        error: '#ef4444',
+        wait: '#fbbf24'
+    };
+    
+    // Создаём уведомление
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <div class="notification-icon">${icons[type] || icons.info}</div>
+        <div class="notification-content">
+            ${title ? `<div class="notification-title">${title}</div>` : ''}
+            <div class="notification-message">${message}</div>
+        </div>
+        <button class="notification-close" onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    // Добавляем в контейнер
+    container.prepend(notification);
+    
+    // Добавляем класс для анимации
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 10);
+    
+    // Автоматическое удаление через 5 секунд
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 500);
+    }, 5000);
 }
 
 // ========== АУТЕНТИФИКАЦИЯ ==========
@@ -75,12 +129,15 @@ async function handleLogin(e) {
             saveAuthData(data.token, data.user);
             showGameScreen();
             loadDinosaur();
+            showNotification(`Добро пожаловать, ${data.user.username}!`, 'success', 'Успешный вход');
         } else {
             showError('auth-error', data.error || 'Ошибка входа');
+            showNotification(data.error || 'Ошибка входа', 'error', 'Ошибка');
         }
     } catch (error) {
         console.error('Ошибка:', error);
         showError('auth-error', 'Не удалось подключиться к серверу');
+        showNotification('Не удалось подключиться к серверу', 'error', 'Ошибка соединения');
     }
 }
 
@@ -103,12 +160,15 @@ async function handleRegister(e) {
             saveAuthData(data.token, data.user);
             showGameScreen();
             loadDinosaur();
+            showNotification(`Добро пожаловать в мир динозавров, ${data.user.username}!`, 'success', 'Регистрация успешна');
         } else {
             showError('auth-error', data.error || 'Ошибка регистрации');
+            showNotification(data.error || 'Ошибка регистрации', 'error', 'Ошибка');
         }
     } catch (error) {
         console.error('Ошибка:', error);
         showError('auth-error', 'Не удалось подключиться к серверу');
+        showNotification('Не удалось подключиться к серверу', 'error', 'Ошибка соединения');
     }
 }
 
@@ -136,6 +196,7 @@ function logout() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     showAuthScreen();
+    showNotification('Вы успешно вышли из аккаунта', 'info', 'До встречи!');
 }
 
 // ========== ЭКРАНЫ ==========
@@ -165,6 +226,7 @@ async function loadDinosaur() {
             if (data.error === 'Неверный или просроченный токен') {
                 logout();
                 showError('auth-error', 'Сессия истекла, войдите снова');
+                showNotification('Сессия истекла, войдите снова', 'error', 'Ошибка авторизации');
                 showAuthScreen();
             } else {
                 console.error('Ошибка загрузки:', data);
@@ -172,6 +234,7 @@ async function loadDinosaur() {
         }
     } catch (error) {
         console.error('Ошибка загрузки динозавра:', error);
+        showNotification('Не удалось загрузить данные динозавра', 'error', 'Ошибка');
     }
 }
 
@@ -215,7 +278,11 @@ async function feedDinosaur() {
         const data = await response.json();
         
         if (response.ok) {
-            // Анимация
+            // Анимация кнопки
+            btn.classList.add('success');
+            setTimeout(() => btn.classList.remove('success'), 500);
+            
+            // Анимация динозавра
             const dinoImg = document.getElementById('dino-image');
             dinoImg.style.animation = 'none';
             setTimeout(() => {
@@ -225,20 +292,28 @@ async function feedDinosaur() {
             // Обновить данные
             displayDinosaur(data.dino);
             
+            // Сообщение о кормлении
+            showNotification(`+10 опыта! Прогресс: ${data.dino.xpProgress}%`, 'success', 'Динозавр накормлен');
+            
             // Сообщение об эволюции
             if (data.dino.evolved) {
-                alert(`🎉 Поздравляем! Твой ${data.dino.speciesName} эволюционировал на уровень ${data.dino.level}!`);
+                showNotification(`🎉 Поздравляем! Твой ${data.dino.speciesName} эволюционировал на уровень ${data.dino.level}!`, 'success', 'ЭВОЛЮЦИЯ!');
+                
+                // Вибрация для мобильных устройств
+                if (navigator.vibrate) {
+                    navigator.vibrate([100, 50, 100]);
+                }
             }
         } else {
             if (data.cooldown) {
-                alert(`⏳ ${data.error}`);
+                showNotification(`Подождите ещё ${data.waitMinutes} минут(ы) до следующего кормления`, 'wait', 'Слишком рано');
             } else {
-                alert(`❌ ${data.error}`);
+                showNotification(data.error || 'Не удалось покормить динозавра', 'error', 'Ошибка');
             }
         }
     } catch (error) {
         console.error('Ошибка кормления:', error);
-        alert('Не удалось покормить динозавра');
+        showNotification('Не удалось покормить динозавра', 'error', 'Ошибка соединения');
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
@@ -261,6 +336,7 @@ async function saveNewName() {
     
     if (!newName || newName.length < 2) {
         showError('rename-error', 'Имя должно быть не менее 2 символов');
+        showNotification('Имя должно быть от 2 до 20 символов', 'warning', 'Неверное имя');
         return;
     }
     
@@ -279,13 +355,15 @@ async function saveNewName() {
         if (response.ok) {
             hideModal('rename-modal');
             displayDinosaur(data.dino);
-            alert('✅ Динозавр переименован!');
+            showNotification(`Динозавр теперь зовётся "${newName}"`, 'success', 'Имя изменено');
         } else {
             showError('rename-error', data.error || 'Ошибка переименования');
+            showNotification(data.error || 'Ошибка переименования', 'error', 'Ошибка');
         }
     } catch (error) {
         console.error('Ошибка:', error);
         showError('rename-error', 'Не удалось подключиться к серверу');
+        showNotification('Не удалось подключиться к серверу', 'error', 'Ошибка соединения');
     }
 }
 
