@@ -1,6 +1,5 @@
 // ========== КОНФИГУРАЦИЯ ==========
-const API_URL = 'https://dino-game-backend-production.up.railway.app'; // ЗАМЕНИ НА ТВОЙ URL С REPL.IT
-// const API_URL = 'https://твой-проект.repl.co'; // Раскомментируй и вставь свой URL
+const API_URL = 'https://dino-game-backend--lisofoxa.replit.app'; // ✅ ПРАВИЛЬНЫЙ URL
 
 // ========== СОСТОЯНИЕ ==========
 let authToken = localStorage.getItem('authToken');
@@ -21,20 +20,20 @@ document.addEventListener('DOMContentLoaded', () => {
 // ========== НАСТРОЙКА СЛУШАТЕЛЕЙ ==========
 function setupEventListeners() {
     // Переключение вкладок аутентификации
-    document.getElementById('tab-login').addEventListener('click', () => switchTab('login'));
-    document.getElementById('tab-register').addEventListener('click', () => switchTab('register'));
+    document.getElementById('tab-login')?.addEventListener('click', () => switchTab('login'));
+    document.getElementById('tab-register')?.addEventListener('click', () => switchTab('register'));
     
     // Формы
-    document.getElementById('login-form').addEventListener('submit', handleLogin);
-    document.getElementById('register-form').addEventListener('submit', handleRegister);
+    document.getElementById('login-form')?.addEventListener('submit', handleLogin);
+    document.getElementById('register-form')?.addEventListener('submit', handleRegister);
     
     // Кнопки в игре
-    document.getElementById('feed-btn').addEventListener('click', feedDinosaur);
-    document.getElementById('rename-btn').addEventListener('click', () => showModal('rename-modal'));
+    document.getElementById('feed-btn')?.addEventListener('click', feedDinosaur);
+    document.getElementById('rename-btn')?.addEventListener('click', () => showModal('rename-modal'));
     
     // Модальное окно
-    document.getElementById('save-name-btn').addEventListener('click', saveNewName);
-    document.getElementById('cancel-name-btn').addEventListener('click', () => hideModal('rename-modal'));
+    document.getElementById('save-name-btn')?.addEventListener('click', saveNewName);
+    document.getElementById('cancel-name-btn')?.addEventListener('click', () => hideModal('rename-modal'));
     
     // Закрытие модалки по клику вне
     window.addEventListener('click', (e) => {
@@ -123,10 +122,10 @@ function saveAuthData(token, user) {
 
 function updateUserInfo() {
     const userInfo = document.getElementById('user-info');
-    if (currentUser) {
+    if (currentUser && userInfo) {
         userInfo.innerHTML = `
             <span>👤 ${currentUser.username}</span>
-            <button onclick="logout()" class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.8rem;">Выйти</button>
+            <button onclick="logout()" class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.8rem; margin-left: 10px;">Выйти</button>
         `;
     }
 }
@@ -141,13 +140,13 @@ function logout() {
 
 // ========== ЭКРАНЫ ==========
 function showAuthScreen() {
-    document.getElementById('auth-screen').classList.add('active');
-    document.getElementById('game-screen').classList.remove('active');
+    document.getElementById('auth-screen')?.classList.add('active');
+    document.getElementById('game-screen')?.classList.remove('active');
 }
 
 function showGameScreen() {
-    document.getElementById('auth-screen').classList.remove('active');
-    document.getElementById('game-screen').classList.add('active');
+    document.getElementById('auth-screen')?.classList.remove('active');
+    document.getElementById('game-screen')?.classList.add('active');
 }
 
 // ========== ЗАГРУЗКА ДИНОЗАВРА ==========
@@ -167,6 +166,8 @@ async function loadDinosaur() {
                 logout();
                 showError('auth-error', 'Сессия истекла, войдите снова');
                 showAuthScreen();
+            } else {
+                console.error('Ошибка загрузки:', data);
             }
         }
     } catch (error) {
@@ -291,12 +292,16 @@ async function saveNewName() {
 // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 function showError(elementId, message) {
     const el = document.getElementById(elementId);
-    el.textContent = message;
-    el.classList.add('active');
+    if (el) {
+        el.textContent = message;
+        el.classList.add('active');
+    }
 }
 
 function hideError(elementId) {
     const el = document.getElementById(elementId);
-    el.classList.remove('active');
-    el.textContent = '';
+    if (el) {
+        el.classList.remove('active');
+        el.textContent = '';
+    }
 }
