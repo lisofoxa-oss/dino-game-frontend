@@ -335,13 +335,12 @@ function displayDinosaur(dino) {
     
     // Изображение динозавра (НОВЫЕ КАРТИНКИ!)
     const imageMap = {
-        'compsognathus': '/images/compy.png',
-        'triceratops': '/images/trike.png',
-        'velociraptor': '/images/raptor.png',
-        'trex': '/images/trex.png'
+        'compsognathus': 'images/compy.png',
+        'triceratops': 'images/trike.png',
+        'velociraptor': 'images/raptor.png',
+        'trex': 'images/trex.png'
     };
-    
-    document.getElementById('dino-image').src = imageMap[dino.species] || '/images/compy.png';
+    document.getElementById('dino-image').src = imageMap[dino.species] || 'images/compy.png';
 }
 
 // ========== КОРМЛЕНИЕ ==========
