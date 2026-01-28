@@ -685,3 +685,30 @@ body {
 .btn-feed.cooldown:hover {
     transform: none !important;
 }
+
+.btn-hunt {
+    background: linear-gradient(45deg, #ef4444, #f87171);
+    color: white;
+    font-size: 1.2rem;
+    padding: 15px 40px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+}
+
+.btn-hunt:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+}
+
+.btn-hunt:disabled {
+    background: linear-gradient(45deg, #6b7280, #9ca3af);
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.btn-hunt.success {
+    animation: successPulse 0.5s ease;
+    background: linear-gradient(45deg, #4ade80, #86efac);
+}
