@@ -96,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (authToken) {
         showGameScreen();
         loadDinosaur();
+        checkStatus();
     } else {
         showAuthScreen();
     }
@@ -113,6 +114,7 @@ function setupEventListeners() {
     
     // Кнопки в игре
     document.getElementById('feed-btn')?.addEventListener('click', feedDinosaur);
+    document.getElementById('hunt-btn')?.addEventListener('click', huntDinosaur);
     document.getElementById('rename-btn')?.addEventListener('click', () => showModal('rename-modal'));
     
     // Модальное окно переименования
@@ -138,16 +140,8 @@ function showNotification(message, type = 'info', title = null) {
         info: 'ℹ️',
         warning: '⚠️',
         error: '❌',
-        wait: '⏳'
-    };
-    
-    // Цвета
-    const colors = {
-        success: '#4ade80',
-        info: '#3b82f6',
-        warning: '#fbbf24',
-        error: '#ef4444',
-        wait: '#fbbf24'
+        wait: '⏳',
+        hunt: '🥩'
     };
     
     // Создаём уведомление
@@ -294,6 +288,83 @@ function showGameScreen() {
     document.getElementById('game-screen')?.classList.add('active');
 }
 
+// ========== ПРОВЕРКА СТАТУСА (жив/мёртв) ==========
+async function checkStatus() {
+    try {
+        const response = await fetch(`${API_URL}/api/dino/status`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            if (data.isHunted) {
+                // Динозавр "мёртвый"
+                showDeathScreen(data.huntedUntil);
+            } else {
+                // Динозавр жив
+                hideDeathScreen();
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка проверки статуса:', error);
+    }
+}
+
+function showDeathScreen(until) {
+    const gameScreen = document.getElementById('game-screen');
+    if (!gameScreen) return;
+    
+    gameScreen.innerHTML = `
+        <div class="death-screen">
+            <h2 style="color: #ef4444; margin-bottom: 20px;">☠️ ТВОЙ ДИНОЗАВР МЁРТВ!</h2>
+            <p style="font-size: 1.2rem; margin-bottom: 30px;">
+                Тебя съел другой хищник.<br>
+                Ты сможешь играть снова через:
+            </p>
+            <div id="death-timer" style="font-size: 2rem; color: #fbbf24; font-weight: bold; margin-bottom: 30px;">--:--:--</div>
+            <p style="color: #888; margin-bottom: 20px;">
+                Охота опасна... Будь осторожнее в следующий раз!
+            </p>
+            <button onclick="location.reload()" class="btn btn-secondary" style="padding: 10px 30px;">
+                Обновить статус
+            </button>
+        </div>
+    `;
+    
+    // Запускаем таймер
+    updateDeathTimer(until);
+}
+
+function updateDeathTimer(until) {
+    const timerEl = document.getElementById('death-timer');
+    if (!timerEl) return;
+    
+    const interval = setInterval(() => {
+        const now = new Date();
+        const remaining = new Date(until) - now;
+        
+        if (remaining <= 0) {
+            clearInterval(interval);
+            location.reload();
+            return;
+        }
+        
+        const hours = Math.floor(remaining / (1000 * 60 * 60));
+        const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((remaining % (1000 * 60)) / 1000)
+                          .toString()
+                          .padStart(2, '0');
+        
+        timerEl.textContent = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds}`;
+    }, 1000);
+}
+
+function hideDeathScreen() {
+    // Ничего не делаем, просто загружаем динозавра заново
+    loadDinosaur();
+}
+
 // ========== ЗАГРУЗКА ДИНОЗАВРА ==========
 async function loadDinosaur() {
     try {
@@ -307,6 +378,8 @@ async function loadDinosaur() {
             displayDinosaur(data.dino);
             // Запускаем кулдаун на основе данных из базы
             startCooldownFromServer(data.dino.lastFed);
+            // Показываем кнопку охоты если хищник
+            updateHuntButton(data.dino);
         } else {
             // Если токен невалидный
             if (data.error === 'Неверный или просроченный токен') {
@@ -340,7 +413,33 @@ function displayDinosaur(dino) {
         'velociraptor': 'images/raptor.png',
         'trex': 'images/trex.png'
     };
+    
     document.getElementById('dino-image').src = imageMap[dino.species] || 'images/compy.png';
+}
+
+function updateHuntButton(dino) {
+    const huntBtn = document.getElementById('hunt-btn');
+    if (!huntBtn) return;
+    
+    // Показываем кнопку только для хищников
+    if (dino.type === 'predator' || dino.type === 'apex_predator') {
+        huntBtn.style.display = 'block';
+        
+        // Обновляем текст кнопки
+        const huntsLeft = 3 - (dino.huntsToday || 0);
+        huntBtn.innerHTML = `🥩 Охотиться (${huntsLeft}/3)`;
+        
+        // Блокируем если лимит исчерпан
+        if (huntsLeft <= 0) {
+            huntBtn.disabled = true;
+            huntBtn.title = 'Лимит охот исчерпан. Попробуй завтра!';
+        } else {
+            huntBtn.disabled = false;
+            huntBtn.title = '';
+        }
+    } else {
+        huntBtn.style.display = 'none';
+    }
 }
 
 // ========== КОРМЛЕНИЕ ==========
@@ -405,6 +504,75 @@ async function feedDinosaur() {
     } catch (error) {
         console.error('Ошибка кормления:', error);
         showNotification('Не удалось покормить динозавра', 'error', 'Ошибка соединения');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+// ========== ОХОТА ==========
+async function huntDinosaur() {
+    const btn = document.getElementById('hunt-btn');
+    const originalText = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '🥩 Охотимся...';
+    
+    try {
+        const response = await fetch(`${API_URL}/api/dino/hunt`, {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            if (data.success) {
+                // Успешная охота
+                btn.classList.add('success');
+                setTimeout(() => btn.classList.remove('success'), 500);
+                
+                // Анимация динозавра
+                const dinoImg = document.getElementById('dino-image');
+                dinoImg.style.animation = 'none';
+                setTimeout(() => {
+                    dinoImg.style.animation = 'pulse 0.5s';
+                }, 10);
+                
+                // Обновить данные
+                displayDinosaur(data.dino);
+                updateHuntButton(data.dino);
+                
+                // Сообщение об охоте
+                showNotification(`${data.message}<br>+50 опыта!`, 'success', 'УСПЕШНАЯ ОХОТА!');
+                
+                // Сообщение об эволюции
+                if (data.evolved) {
+                    showNotification(`🎉 Поздравляем! Твой ${data.dino.speciesName} эволюционировал на уровень ${data.dino.level}!`, 'success', 'ЭВОЛЮЦИЯ!');
+                }
+            } else {
+                // Неудачная охота
+                showNotification(data.message, 'warning', 'ОХОТА НЕУДАЧНА');
+                // Обновить данные
+                loadDinosaur();
+            }
+        } else {
+            if (data.canHunt === false) {
+                showNotification('Только хищники могут охотиться! Сначала эволюционируй до Велоцираптора (уровень 25+)', 'warning', 'Нельзя охотиться');
+            } else if (data.cooldown) {
+                showNotification(data.error, 'wait', 'Лимит охот исчерпан');
+            } else if (data.noPrey) {
+                showNotification('Нет доступных жертв. Попробуй позже!', 'info', 'Нет жертв');
+            } else {
+                showNotification(data.error || 'Не удалось охотиться', 'error', 'Ошибка');
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка охоты:', error);
+        showNotification('Не удалось охотиться', 'error', 'Ошибка соединения');
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
