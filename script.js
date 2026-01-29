@@ -281,11 +281,15 @@ function displayDinosaurs(dinosaurs) {
         return;
     }
     
+    // Маппинг видов → папок
+    const folderMap = {
+        'compsognathus': 'compy',
+        'triceratops': 'trike',
+        'velociraptor': 'raptor',
+        'trex': 'trex'
+    };
+    
     container.innerHTML = dinosaurs.map(dino => {
-        // Определяем картинку по уровню
-        const imageLevel = Math.min(Math.max(1, Math.ceil(dino.level / 1)), 10); // 1-10
-        const imagePath = `images/${dino.species}/${dino.species}-${imageLevel}.png`;
-        
         // Статус голода
         const hungerText = {
             fed: '✅ Сыт',
@@ -298,6 +302,13 @@ function displayDinosaurs(dinosaurs) {
             hungry_soon: 'hungry_soon',
             hungry: 'hungry'
         };
+        
+        // Определяем картинку по уровню (1-10)
+        // Уровень 1-10 → картинка 1-10
+        // Уровень 11+ → картинка 10 (максимум)
+        const imageLevel = Math.min(10, Math.max(1, dino.level));
+        const folder = folderMap[dino.species] || 'compy';
+        const imagePath = `images/${folder}/${folder}-${imageLevel}.png`;
         
         return `
             <div class="dinosaur-card" data-id="${dino.id}">
@@ -327,7 +338,7 @@ function displayDinosaurs(dinosaurs) {
                 </div>
                 
                 <div class="dino-image-container">
-                    <img src="${imagePath}" alt="${dino.speciesName}" class="dino-image">
+                    <img src="${imagePath}" alt="${dino.speciesName}" class="dino-image" onerror="this.src='images/compy/compy-1.png'">
                 </div>
                 
                 <button class="btn btn-action feed-btn" ${dino.hungerStatus !== 'hungry' ? 'disabled' : ''}>
