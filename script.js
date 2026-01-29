@@ -35,7 +35,9 @@ function setupEventListeners() {
     document.getElementById('collect-all-btn')?.addEventListener('click', collectAllResources);
     
     // Кнопка выхода
-    document.getElementById('logout-btn')?.addEventListener('click', logout);
+    document.getElementById('logout-btn')?.addEventListener('click', () => {
+        logout();
+    });
     
     // Заглушки для будущих функций
     document.querySelector('.btn-secondary')?.addEventListener('click', () => {
