@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🦕 Dino Game - Эволюция Динозавров</title>
+    <title>🦕 Dino Farm — Ферма Динозавров</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +13,7 @@
     <div class="container">
         <!-- Шапка -->
         <header class="header">
-            <h1 class="logo">🦕 DINO GAME</h1>
+            <h1 class="logo">🦕 DINO FARM</h1>
             <div id="user-info" class="user-info"></div>
         </header>
 
@@ -22,7 +22,7 @@
             <!-- Экран входа/регистрации -->
             <div id="auth-screen" class="screen active">
                 <div class="auth-container">
-                    <h2 class="screen-title">🎮 Добро пожаловать!</h2>
+                    <h2 class="screen-title">🎮 Добро пожаловать на ферму!</h2>
                     
                     <div class="tabs">
                         <button id="tab-login" class="tab-btn active">Вход</button>
@@ -46,68 +46,113 @@
                 </div>
             </div>
 
-            <!-- Экран игры -->
-            <div id="game-screen" class="screen">
-                <div class="game-container">
-                    <!-- Карточка динозавра -->
-                    <div class="dino-card">
-                        <div class="dino-image-container">
-                            <img id="dino-image" src="https://lisofoxa-oss.github.io/dino-game-frontend/images/zagl.png" alt="Динозавр">
-                        </div>
-                        
-                        <div class="dino-info">
-                            <h2 id="dino-name" class="dino-name">Загрузка...</h2>
-                            <p id="dino-species" class="dino-species">---</p>
-                            
-                            <div class="level-info">
-                                <span class="label">Уровень:</span>
-                                <span id="dino-level" class="value">1</span>
-                            </div>
+            <!-- Экран фермы -->
+            <div id="farm-screen" class="screen">
+                <!-- Панель ресурсов -->
+                <div class="resources-bar">
+                    <div class="resource-item">
+                        <span class="resource-icon">🌾</span>
+                        <span class="resource-label">Зерно:</span>
+                        <span id="grain-count" class="resource-value">0</span>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-icon">💧</span>
+                        <span class="resource-label">Вода:</span>
+                        <span id="water-count" class="resource-value">0</span>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-icon">💎</span>
+                        <span class="resource-label">Самоцветы:</span>
+                        <span id="gems-count" class="resource-value">0</span>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-icon">🎁</span>
+                        <span class="resource-label">Сундуки:</span>
+                        <span id="chests-count" class="resource-value">0</span>
+                    </div>
+                </div>
 
-                            <div class="xp-bar-container">
-                                <div class="xp-bar-label">
-                                    <span>Опыт:</span>
-                                    <span id="xp-text">0 / 100</span>
+                <!-- Основная область фермы -->
+                <div class="farm-layout">
+                    <!-- Левая панель: Здания -->
+                    <div class="farm-sidebar">
+                        <h3 class="sidebar-title">🏠 Здания</h3>
+                        <div id="buildings-list" class="buildings-list">
+                            <!-- Здания будут загружаться сюда -->
+                            <div class="building-item placeholder">
+                                <div class="building-icon">🏠</div>
+                                <div class="building-info">
+                                    <div class="building-name">Загрузка...</div>
+                                    <div class="building-level">Уровень: ?</div>
                                 </div>
-                                <div class="xp-bar">
-                                    <div id="xp-progress" class="xp-progress" style="width: 0%"></div>
-                                </div>
+                                <button class="btn btn-small building-collect-btn" disabled>
+                                    Собрать
+                                </button>
                             </div>
-                            
-                            <!-- Таймер кулдауна -->
-                            <div id="cooldown-timer" class="cooldown-timer" style="display: none;">
-                                ⏱️ Следующее кормление через: <span id="timer-value">05:00</span>
-                            </div>
-
-                            <button id="feed-btn" class="btn btn-feed">🍖 Покормить</button>
-                            <button id="hunt-btn" class="btn btn-hunt" style="display: none;">🥩 Охотиться</button>
-                            <button id="rename-btn" class="btn btn-secondary">✏️ Переименовать</button>
-
                         </div>
                     </div>
 
-                    <!-- Модальное окно переименования -->
-                    <div id="rename-modal" class="modal">
-                        <div class="modal-content">
-                            <h3>✏️ Переименовать динозавра</h3>
-                            <input type="text" id="new-name" placeholder="Новое имя" maxlength="20">
-                            <div class="modal-buttons">
-                                <button id="save-name-btn" class="btn btn-primary">Сохранить</button>
-                                <button id="cancel-name-btn" class="btn btn-secondary">Отмена</button>
+                    <!-- Центр: Загон динозавров -->
+                    <div class="farm-main">
+                        <h2 id="farm-name" class="farm-name">Моя Ферма</h2>
+                        
+                        <div class="dinosaurs-pen">
+                            <h3 class="pen-title">🦕 Загон динозавров</h3>
+                            
+                            <div id="dinosaurs-grid" class="dinosaurs-grid">
+                                <!-- Динозавры будут загружаться сюда -->
+                                <div class="dinosaur-card loading">
+                                    <div class="dino-image-placeholder"></div>
+                                    <div class="dino-info-placeholder">
+                                        <div class="skeleton-line"></div>
+                                        <div class="skeleton-line short"></div>
+                                        <div class="skeleton-line xshort"></div>
+                                    </div>
+                                </div>
                             </div>
-                            <div id="rename-error" class="error-message"></div>
+                        </div>
+                    </div>
+
+                    <!-- Правая панель: Действия -->
+                    <div class="farm-actions">
+                        <h3 class="actions-title">🎮 Действия</h3>
+                        
+                        <div class="action-card">
+                            <h4>📦 Сбор ресурсов</h4>
+                            <p>Собери урожай с полей и водоёмов</p>
+                            <button id="collect-all-btn" class="btn btn-action btn-collect">
+                                🌾 Собрать всё
+                            </button>
+                            <div id="collect-status" class="action-status"></div>
+                        </div>
+
+                        <div class="action-card">
+                            <h4>🥚 Инкубатор</h4>
+                            <p>Выращивай новых динозавров из яиц</p>
+                            <button class="btn btn-action btn-secondary">
+                                🥚 Открыть инкубатор
+                            </button>
+                        </div>
+
+                        <div class="action-card">
+                            <h4>🎁 Сундук удачи</h4>
+                            <p>Открой сундук и получи редкого динозавра!</p>
+                            <button class="btn btn-action btn-gems">
+                                🎁 Открыть сундук
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </main>
 
-        <!-- Футер -->
-        <footer class="footer">
-            <p>🦕 Dino Game &copy; 2026 | Эволюционируй и выживай!</p>
-        </footer>
         <!-- Контейнер для уведомлений -->
         <div id="notifications-container" class="notifications-container"></div>
+
+        <!-- Футер -->
+        <footer class="footer">
+            <p>🦕 Dino Farm &copy; 2026 | Развивай свою ферму!</p>
+        </footer>
     </div>
 
     <script src="script.js"></script>
