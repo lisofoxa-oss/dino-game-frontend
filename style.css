@@ -813,3 +813,23 @@ body {
         padding: 20px;
     }
 }
+/* Кнопка выхода в шапке */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.btn-logout {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 2px solid #ef4444;
+}
+
+.btn-logout:hover {
+    background: #ef4444;
+    color: white;
+    transform: translateY(-1px);
+}
