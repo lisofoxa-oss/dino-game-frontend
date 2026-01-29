@@ -4,99 +4,18 @@ const API_URL = 'https://dino-game-backend--lisofoxa.replit.app'; // ✅ ТВО�
 // ========== СОСТОЯНИЕ ==========
 let authToken = localStorage.getItem('authToken');
 let currentUser = null;
-
-// ========== ТАЙМЕР КУЛДАУНА (из базы данных) ==========
-let cooldownTimer = null;
-let lastFedTime = null;
-const COOLDOWN_MINUTES = 5; // 5 минут кулдаун
-
-// Вычисляем оставшееся время до следующего кормления
-function calculateRemainingTime(lastFed) {
-    if (!lastFed) return null;
-    
-    const now = new Date();
-    const lastFedDate = new Date(lastFed);
-    const elapsedMinutes = (now - lastFedDate) / (1000 * 60);
-    const remainingMinutes = COOLDOWN_MINUTES - elapsedMinutes;
-    
-    return Math.max(0, remainingMinutes * 60 * 1000); // В миллисекундах
-}
-
-function startCooldownFromServer(lastFed) {
-    lastFedTime = lastFed ? new Date(lastFed) : null;
-    
-    if (!lastFedTime) {
-        stopCooldown();
-        return;
-    }
-    
-    const remaining = calculateRemainingTime(lastFed);
-    
-    if (remaining && remaining > 0) {
-        // Кулдаун ещё активен
-        updateCooldownUI(remaining);
-        
-        // Запускаем таймер для обновления интерфейса
-        if (cooldownTimer) clearInterval(cooldownTimer);
-        cooldownTimer = setInterval(() => {
-            const newRemaining = calculateRemainingTime(lastFedTime);
-            if (newRemaining && newRemaining > 0) {
-                updateCooldownUI(newRemaining);
-            } else {
-                stopCooldown();
-            }
-        }, 1000);
-    } else {
-        // Кулдаун закончился
-        stopCooldown();
-    }
-}
-
-function updateCooldownUI(remainingMilliseconds) {
-    const minutes = Math.floor(remainingMilliseconds / 60000);
-    const seconds = Math.floor((remainingMilliseconds % 60000) / 1000)
-                      .toString()
-                      .padStart(2, '0');
-    
-    // Обновляем интерфейс
-    const timerEl = document.getElementById('timer-value');
-    const cooldownEl = document.getElementById('cooldown-timer');
-    const feedBtn = document.getElementById('feed-btn');
-    
-    if (timerEl && cooldownEl && feedBtn) {
-        timerEl.textContent = `${minutes}:${seconds}`;
-        cooldownEl.style.display = 'flex';
-        cooldownEl.classList.add('active');
-        feedBtn.classList.add('cooldown');
-        feedBtn.disabled = true;
-    }
-}
-
-function stopCooldown() {
-    if (cooldownTimer) clearInterval(cooldownTimer);
-    cooldownTimer = null;
-    lastFedTime = null;
-    
-    // Обновляем интерфейс
-    const cooldownEl = document.getElementById('cooldown-timer');
-    const feedBtn = document.getElementById('feed-btn');
-    
-    if (cooldownEl && feedBtn) {
-        cooldownEl.style.display = 'none';
-        cooldownEl.classList.remove('active');
-        feedBtn.classList.remove('cooldown');
-        feedBtn.disabled = false;
-    }
-}
+let farmData = null;
+let refreshInterval = null;
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     
     if (authToken) {
-        showGameScreen();
-        loadDinosaur();
-        checkStatus();
+        showFarmScreen();
+        loadFarm();
+        // Автообновление каждые 30 секунд
+        refreshInterval = setInterval(loadFarm, 30000);
     } else {
         showAuthScreen();
     }
@@ -112,14 +31,8 @@ function setupEventListeners() {
     document.getElementById('login-form')?.addEventListener('submit', handleLogin);
     document.getElementById('register-form')?.addEventListener('submit', handleRegister);
     
-    // Кнопки в игре
-    document.getElementById('feed-btn')?.addEventListener('click', feedDinosaur);
-    document.getElementById('hunt-btn')?.addEventListener('click', huntDinosaur);
-    document.getElementById('rename-btn')?.addEventListener('click', () => showModal('rename-modal'));
-    
-    // Модальное окно переименования
-    document.getElementById('save-name-btn')?.addEventListener('click', saveNewName);
-    document.getElementById('cancel-name-btn')?.addEventListener('click', () => hideModal('rename-modal'));
+    // Кнопка сбора ресурсов
+    document.getElementById('collect-all-btn')?.addEventListener('click', collectAllResources);
     
     // Закрытие модалки по клику вне
     window.addEventListener('click', (e) => {
@@ -140,8 +53,8 @@ function showNotification(message, type = 'info', title = null) {
         info: 'ℹ️',
         warning: '⚠️',
         error: '❌',
-        wait: '⏳',
-        hunt: '🥩'
+        collect: '🌾',
+        feed: '🍖'
     };
     
     // Создаём уведомление
@@ -177,15 +90,10 @@ function showNotification(message, type = 'info', title = null) {
 
 // ========== АУТЕНТИФИКАЦИЯ ==========
 function switchTab(tab) {
-    // Переключение кнопок
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(`tab-${tab}`).classList.add('active');
-    
-    // Переключение форм
     document.getElementById('login-form').style.display = tab === 'login' ? 'flex' : 'none';
     document.getElementById('register-form').style.display = tab === 'register' ? 'flex' : 'none';
-    
-    // Скрыть ошибки
     hideError('auth-error');
 }
 
@@ -205,8 +113,8 @@ async function handleLogin(e) {
         
         if (response.ok) {
             saveAuthData(data.token, data.user);
-            showGameScreen();
-            loadDinosaur();
+            showFarmScreen();
+            loadFarm();
             showNotification(`Добро пожаловать, ${data.user.username}!`, 'success', 'Успешный вход');
         } else {
             showError('auth-error', data.error || 'Ошибка входа');
@@ -236,9 +144,9 @@ async function handleRegister(e) {
         
         if (response.ok) {
             saveAuthData(data.token, data.user);
-            showGameScreen();
-            loadDinosaur();
-            showNotification(`Добро пожаловать в мир динозавров, ${data.user.username}!`, 'success', 'Регистрация успешна');
+            showFarmScreen();
+            loadFarm();
+            showNotification(`Добро пожаловать на ферму, ${data.user.username}!`, 'success', 'Регистрация успешна');
         } else {
             showError('auth-error', data.error || 'Ошибка регистрации');
             showNotification(data.error || 'Ошибка регистрации', 'error', 'Ошибка');
@@ -271,6 +179,7 @@ function updateUserInfo() {
 function logout() {
     authToken = null;
     currentUser = null;
+    if (refreshInterval) clearInterval(refreshInterval);
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     showAuthScreen();
@@ -280,108 +189,27 @@ function logout() {
 // ========== ЭКРАНЫ ==========
 function showAuthScreen() {
     document.getElementById('auth-screen')?.classList.add('active');
-    document.getElementById('game-screen')?.classList.remove('active');
+    document.getElementById('farm-screen')?.classList.remove('active');
 }
 
-function showGameScreen() {
+function showFarmScreen() {
     document.getElementById('auth-screen')?.classList.remove('active');
-    document.getElementById('game-screen')?.classList.add('active');
+    document.getElementById('farm-screen')?.classList.add('active');
 }
 
-// ========== ПРОВЕРКА СТАТУСА (жив/мёртв) ==========
-async function checkStatus() {
+// ========== ЗАГРУЗКА ФЕРМЫ ==========
+async function loadFarm() {
     try {
-        const response = await fetch(`${API_URL}/api/dino/status`, {
+        const response = await fetch(`${API_URL}/api/dino/farm`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
         
         const data = await response.json();
         
         if (response.ok) {
-            if (data.isHunted) {
-                // Динозавр "мёртвый"
-                showDeathScreen(data.huntedUntil);
-            } else {
-                // Динозавр жив
-                hideDeathScreen();
-            }
-        }
-    } catch (error) {
-        console.error('Ошибка проверки статуса:', error);
-    }
-}
-
-function showDeathScreen(until) {
-    const gameScreen = document.getElementById('game-screen');
-    if (!gameScreen) return;
-    
-    gameScreen.innerHTML = `
-        <div class="death-screen">
-            <h2 style="color: #ef4444; margin-bottom: 20px;">☠️ ТВОЙ ДИНОЗАВР МЁРТВ!</h2>
-            <p style="font-size: 1.2rem; margin-bottom: 30px;">
-                Тебя съел другой хищник.<br>
-                Ты сможешь играть снова через:
-            </p>
-            <div id="death-timer" style="font-size: 2rem; color: #fbbf24; font-weight: bold; margin-bottom: 30px;">--:--:--</div>
-            <p style="color: #888; margin-bottom: 20px;">
-                Охота опасна... Будь осторожнее в следующий раз!
-            </p>
-            <button onclick="location.reload()" class="btn btn-secondary" style="padding: 10px 30px;">
-                Обновить статус
-            </button>
-        </div>
-    `;
-    
-    // Запускаем таймер
-    updateDeathTimer(until);
-}
-
-function updateDeathTimer(until) {
-    const timerEl = document.getElementById('death-timer');
-    if (!timerEl) return;
-    
-    const interval = setInterval(() => {
-        const now = new Date();
-        const remaining = new Date(until) - now;
-        
-        if (remaining <= 0) {
-            clearInterval(interval);
-            location.reload();
-            return;
-        }
-        
-        const hours = Math.floor(remaining / (1000 * 60 * 60));
-        const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((remaining % (1000 * 60)) / 1000)
-                          .toString()
-                          .padStart(2, '0');
-        
-        timerEl.textContent = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds}`;
-    }, 1000);
-}
-
-function hideDeathScreen() {
-    // Ничего не делаем, просто загружаем динозавра заново
-    loadDinosaur();
-}
-
-// ========== ЗАГРУЗКА ДИНОЗАВРА ==========
-async function loadDinosaur() {
-    try {
-        const response = await fetch(`${API_URL}/api/dino/my`, {
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            displayDinosaur(data.dino);
-            // Запускаем кулдаун на основе данных из базы
-            startCooldownFromServer(data.dino.lastFed);
-            // Показываем кнопку охоты если хищник
-            updateHuntButton(data.dino);
+            farmData = data;
+            displayFarm(data);
         } else {
-            // Если токен невалидный
             if (data.error === 'Неверный или просроченный токен') {
                 logout();
                 showError('auth-error', 'Сессия истекла, войдите снова');
@@ -392,59 +220,218 @@ async function loadDinosaur() {
             }
         }
     } catch (error) {
-        console.error('Ошибка загрузки динозавра:', error);
-        showNotification('Не удалось загрузить данные динозавра', 'error', 'Ошибка');
+        console.error('Ошибка загрузки фермы:', error);
+        showNotification('Не удалось загрузить ферму', 'error', 'Ошибка');
     }
 }
 
-function displayDinosaur(dino) {
-    document.getElementById('dino-name').textContent = dino.name;
-    document.getElementById('dino-species').textContent = dino.speciesName;
-    document.getElementById('dino-level').textContent = dino.level;
+function displayFarm(data) {
+    // Отображение ресурсов
+    document.getElementById('grain-count').textContent = data.farm.resources.grain;
+    document.getElementById('water-count').textContent = data.farm.resources.water;
+    document.getElementById('gems-count').textContent = data.farm.resources.gems || 0;
+    document.getElementById('chests-count').textContent = 
+        data.farm.chests.common + data.farm.chests.rare + 
+        data.farm.chests.epic + data.farm.chests.legendary;
     
-    // Прогресс опыта
-    document.getElementById('xp-text').textContent = `${dino.xp} / ${dino.xpToNextLevel}`;
-    document.getElementById('xp-progress').style.width = `${dino.xpProgress}%`;
+    // Отображение названия фермы
+    document.getElementById('farm-name').textContent = data.farm.farmName;
     
-    // Изображение динозавра (НОВЫЕ КАРТИНКИ!)
-    const imageMap = {
-        'compsognathus': 'images/compy.png',
-        'triceratops': 'images/trike.png',
-        'velociraptor': 'images/raptor.png',
-        'trex': 'images/trex.png'
-    };
+    // Отображение зданий
+    displayBuildings(data.buildings);
     
-    document.getElementById('dino-image').src = imageMap[dino.species] || 'images/compy.png';
+    // Отображение динозавров
+    displayDinosaurs(data.dinosaurs);
 }
 
-function updateHuntButton(dino) {
-    const huntBtn = document.getElementById('hunt-btn');
-    if (!huntBtn) return;
+function displayBuildings(buildings) {
+    const container = document.getElementById('buildings-list');
+    if (!container) return;
     
-    // Показываем кнопку только для хищников
-    if (dino.type === 'predator' || dino.type === 'apex_predator') {
-        huntBtn.style.display = 'block';
+    if (buildings.length === 0) {
+        container.innerHTML = '<div class="building-item"><div class="building-info">Нет зданий</div></div>';
+        return;
+    }
+    
+    container.innerHTML = buildings.map(building => `
+        <div class="building-item" data-id="${building.id}">
+            <div class="building-icon">${building.icon}</div>
+            <div class="building-info">
+                <div class="building-name">${building.displayName}</div>
+                <div class="building-level">Уровень: ${building.level}</div>
+            </div>
+            <button class="btn btn-small building-collect-btn" ${building.canCollect ? '' : 'disabled'}>
+                ${building.canCollect ? 'Собрать' : '⏳ Ждём...'}
+            </button>
+        </div>
+    `).join('');
+    
+    // Добавляем обработчики кнопок
+    document.querySelectorAll('.building-collect-btn').forEach(btn => {
+        btn.addEventListener('click', () => collectBuilding(btn.dataset.id));
+    });
+}
+
+function displayDinosaurs(dinosaurs) {
+    const container = document.getElementById('dinosaurs-grid');
+    if (!container) return;
+    
+    if (dinosaurs.length === 0) {
+        container.innerHTML = '<div class="dinosaur-card"><div class="dino-info">Нет динозавров</div></div>';
+        return;
+    }
+    
+    container.innerHTML = dinosaurs.map(dino => {
+        // Определяем картинку по уровню
+        const imageLevel = Math.min(Math.max(1, Math.ceil(dino.level / 1)), 10); // 1-10
+        const imagePath = `images/${dino.species}/${dino.species}-${imageLevel}.png`;
         
-        // Обновляем текст кнопки
-        const huntsLeft = 3 - (dino.huntsToday || 0);
-        huntBtn.innerHTML = `🥩 Охотиться (${huntsLeft}/3)`;
+        // Статус голода
+        const hungerText = {
+            fed: '✅ Сыт',
+            hungry_soon: '⚠️ Скоро проголодается',
+            hungry: '❌ Голоден!'
+        };
         
-        // Блокируем если лимит исчерпан
-        if (huntsLeft <= 0) {
-            huntBtn.disabled = true;
-            huntBtn.title = 'Лимит охот исчерпан. Попробуй завтра!';
-        } else {
-            huntBtn.disabled = false;
-            huntBtn.title = '';
+        const hungerClass = {
+            fed: 'fed',
+            hungry_soon: 'hungry_soon',
+            hungry: 'hungry'
+        };
+        
+        return `
+            <div class="dinosaur-card" data-id="${dino.id}">
+                <div class="dino-header">
+                    <div class="dino-name">${dino.name}</div>
+                    <div class="dino-rarity">${dino.rarityIcon}</div>
+                </div>
+                <div class="dino-species">${dino.speciesName}</div>
+                
+                <div class="dino-level">
+                    <span class="dino-level-label">Уровень:</span>
+                    <span class="dino-level-value">${dino.level}</span>
+                </div>
+                
+                <div class="xp-bar-container">
+                    <div class="xp-bar-label">
+                        <span>Опыт:</span>
+                        <span>${dino.xp} / ${dino.xpToNextLevel}</span>
+                    </div>
+                    <div class="xp-bar">
+                        <div class="xp-progress" style="width: ${dino.xpProgress}%"></div>
+                    </div>
+                </div>
+                
+                <div class="hunger-status ${hungerClass[dino.hungerStatus]}">
+                    ${hungerText[dino.hungerStatus]}
+                </div>
+                
+                <div class="dino-image-container">
+                    <img src="${imagePath}" alt="${dino.speciesName}" class="dino-image">
+                </div>
+                
+                <button class="btn btn-action feed-btn" ${dino.hungerStatus !== 'hungry' ? 'disabled' : ''}>
+                    🍖 Покормить (${dino.hungerCooldown}ч)
+                </button>
+            </div>
+        `;
+    }).join('');
+    
+    // Добавляем обработчики кнопок кормления
+    document.querySelectorAll('.feed-btn').forEach(btn => {
+        btn.addEventListener('click', () => feedDinosaur(btn.closest('.dinosaur-card').dataset.id));
+    });
+}
+
+// ========== СБОР РЕСУРСОВ ==========
+async function collectAllResources() {
+    const btn = document.getElementById('collect-all-btn');
+    const originalText = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '🌾 Собираем...';
+    
+    try {
+        // Собираем со всех зданий, где можно собрать
+        const buildingsToCollect = farmData.buildings
+            .filter(b => b.canCollect)
+            .map(b => b.id);
+        
+        if (buildingsToCollect.length === 0) {
+            showNotification('Нет зданий для сбора. Подождите 2 часа!', 'warning', 'Нечего собирать');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            return;
         }
-    } else {
-        huntBtn.style.display = 'none';
+        
+        const response = await fetch(`${API_URL}/api/dino/collect`, {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ buildingIds: buildingsToCollect })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showNotification(`✅ Собрано: ${data.resources.grain}🌾 зерна, ${data.resources.water}💧 воды`, 'success', 'Урожай собран!');
+            
+            // Показать выпавшие сундуки
+            if (data.chests.common > 0 || data.chests.rare > 0 || data.chests.epic > 0 || data.chests.legendary > 0) {
+                let chestMessage = '🎁 Выпало сундуков:';
+                if (data.chests.common > 0) chestMessage += `\n🟢 Обычных: ${data.chests.common}`;
+                if (data.chests.rare > 0) chestMessage += `\n🟡 Редких: ${data.chests.rare}`;
+                if (data.chests.epic > 0) chestMessage += `\n🔵 Эпических: ${data.chests.epic}`;
+                if (data.chests.legendary > 0) chestMessage += `\n🟣 Легендарных: ${data.chests.legendary}`;
+                
+                showNotification(chestMessage, 'info', 'УДАЧА!');
+            }
+            
+            // Обновить ферму
+            loadFarm();
+        } else {
+            showNotification(data.error || 'Не удалось собрать ресурсы', 'error', 'Ошибка');
+        }
+    } catch (error) {
+        console.error('Ошибка сбора:', error);
+        showNotification('Не удалось собрать ресурсы', 'error', 'Ошибка соединения');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     }
 }
 
-// ========== КОРМЛЕНИЕ ==========
-async function feedDinosaur() {
-    const btn = document.getElementById('feed-btn');
+async function collectBuilding(buildingId) {
+    try {
+        const response = await fetch(`${API_URL}/api/dino/collect`, {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ buildingIds: [buildingId] })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showNotification(`✅ Собрано: ${data.resources.grain}🌾, ${data.resources.water}💧`, 'success', 'Ресурсы собраны!');
+            loadFarm();
+        } else {
+            showNotification(data.error || 'Не удалось собрать', 'error', 'Ошибка');
+        }
+    } catch (error) {
+        console.error('Ошибка сбора:', error);
+        showNotification('Не удалось собрать ресурсы', 'error', 'Ошибка соединения');
+    }
+}
+
+// ========== КОРМЛЕНИЕ ДИНОЗАВРА ==========
+async function feedDinosaur(dinoId) {
+    const card = document.querySelector(`.dinosaur-card[data-id="${dinoId}"]`);
+    const btn = card.querySelector('.feed-btn');
     const originalText = btn.innerHTML;
     
     btn.disabled = true;
@@ -456,173 +443,27 @@ async function feedDinosaur() {
             headers: { 
                 'Authorization': `Bearer ${authToken}`,
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({ dinoId })
         });
         
         const data = await response.json();
         
         if (response.ok) {
-            // Анимация кнопки
-            btn.classList.add('success');
-            setTimeout(() => btn.classList.remove('success'), 500);
-            
-            // Анимация динозавра
-            const dinoImg = document.getElementById('dino-image');
-            dinoImg.style.animation = 'none';
-            setTimeout(() => {
-                dinoImg.style.animation = 'pulse 0.5s';
-            }, 10);
-            
-            // Обновить данные
-            displayDinosaur(data.dino);
-            
-            // Запустить кулдаун на основе данных из базы
-            startCooldownFromServer(data.dino.lastFed);
-            
-            // Сообщение о кормлении
-            showNotification(`+10 опыта! Прогресс: ${data.dino.xpProgress}%`, 'success', 'Динозавр накормлен');
-            
-            // Сообщение об эволюции
-            if (data.dino.evolved) {
-                showNotification(`🎉 Поздравляем! Твой ${data.dino.speciesName} эволюционировал на уровень ${data.dino.level}!`, 'success', 'ЭВОЛЮЦИЯ!');
-                
-                // Вибрация для мобильных устройств
-                if (navigator.vibrate) {
-                    navigator.vibrate([100, 50, 100]);
-                }
-            }
+            showNotification(`✅ ${data.message}`, 'success', 'Динозавр накормлен!');
+            // Обновить ферму
+            loadFarm();
         } else {
-            if (data.cooldown) {
-                // Сервер вернул кулдаун — обновляем интерфейс
-                showNotification(`Подождите ещё ${data.waitMinutes} минут(ы) до следующего кормления`, 'wait', 'Слишком рано');
-                // Обновляем данные из базы
-                loadDinosaur();
-            } else {
-                showNotification(data.error || 'Не удалось покормить динозавра', 'error', 'Ошибка');
-            }
+            showNotification(data.error || 'Не удалось покормить', 'error', 'Ошибка');
+            // Обновить кнопку
+            btn.disabled = false;
+            btn.innerHTML = originalText;
         }
     } catch (error) {
         console.error('Ошибка кормления:', error);
         showNotification('Не удалось покормить динозавра', 'error', 'Ошибка соединения');
-    } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
-    }
-}
-
-// ========== ОХОТА ==========
-async function huntDinosaur() {
-    const btn = document.getElementById('hunt-btn');
-    const originalText = btn.innerHTML;
-    
-    btn.disabled = true;
-    btn.innerHTML = '🥩 Охотимся...';
-    
-    try {
-        const response = await fetch(`${API_URL}/api/dino/hunt`, {
-            method: 'POST',
-            headers: { 
-                'Authorization': `Bearer ${authToken}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            if (data.success) {
-                // Успешная охота
-                btn.classList.add('success');
-                setTimeout(() => btn.classList.remove('success'), 500);
-                
-                // Анимация динозавра
-                const dinoImg = document.getElementById('dino-image');
-                dinoImg.style.animation = 'none';
-                setTimeout(() => {
-                    dinoImg.style.animation = 'pulse 0.5s';
-                }, 10);
-                
-                // Обновить данные
-                displayDinosaur(data.dino);
-                updateHuntButton(data.dino);
-                
-                // Сообщение об охоте
-                showNotification(`${data.message}<br>+50 опыта!`, 'success', 'УСПЕШНАЯ ОХОТА!');
-                
-                // Сообщение об эволюции
-                if (data.evolved) {
-                    showNotification(`🎉 Поздравляем! Твой ${data.dino.speciesName} эволюционировал на уровень ${data.dino.level}!`, 'success', 'ЭВОЛЮЦИЯ!');
-                }
-            } else {
-                // Неудачная охота
-                showNotification(data.message, 'warning', 'ОХОТА НЕУДАЧНА');
-                // Обновить данные
-                loadDinosaur();
-            }
-        } else {
-            if (data.canHunt === false) {
-                showNotification('Только хищники могут охотиться! Сначала эволюционируй до Велоцираптора (уровень 25+)', 'warning', 'Нельзя охотиться');
-            } else if (data.cooldown) {
-                showNotification(data.error, 'wait', 'Лимит охот исчерпан');
-            } else if (data.noPrey) {
-                showNotification('Нет доступных жертв. Попробуй позже!', 'info', 'Нет жертв');
-            } else {
-                showNotification(data.error || 'Не удалось охотиться', 'error', 'Ошибка');
-            }
-        }
-    } catch (error) {
-        console.error('Ошибка охоты:', error);
-        showNotification('Не удалось охотиться', 'error', 'Ошибка соединения');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-    }
-}
-
-// ========== ПЕРЕИМЕНОВАНИЕ ==========
-function showModal(modalId) {
-    document.getElementById(modalId).classList.add('active');
-    document.getElementById('new-name').value = document.getElementById('dino-name').textContent;
-}
-
-function hideModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
-    hideError('rename-error');
-}
-
-async function saveNewName() {
-    const newName = document.getElementById('new-name').value.trim();
-    
-    if (!newName || newName.length < 2) {
-        showError('rename-error', 'Имя должно быть не менее 2 символов');
-        showNotification('Имя должно быть от 2 до 20 символов', 'warning', 'Неверное имя');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_URL}/api/dino/rename`, {
-            method: 'PATCH',
-            headers: {
-                'Authorization': `Bearer ${authToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ name: newName })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            hideModal('rename-modal');
-            displayDinosaur(data.dino);
-            showNotification(`Динозавр теперь зовётся "${newName}"`, 'success', 'Имя изменено');
-        } else {
-            showError('rename-error', data.error || 'Ошибка переименования');
-            showNotification(data.error || 'Ошибка переименования', 'error', 'Ошибка');
-        }
-    } catch (error) {
-        console.error('Ошибка:', error);
-        showError('rename-error', 'Не удалось подключиться к серверу');
-        showNotification('Не удалось подключиться к серверу', 'error', 'Ошибка соединения');
     }
 }
 
