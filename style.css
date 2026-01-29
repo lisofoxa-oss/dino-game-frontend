@@ -813,7 +813,7 @@ body {
         padding: 20px;
     }
 }
-/* Кнопка выхода в шапке */
+/* ========== КНОПКА ВЫХОДА ========== */
 .header-actions {
     display: flex;
     align-items: center;
@@ -826,10 +826,29 @@ body {
     background: rgba(239, 68, 68, 0.2);
     color: #ef4444;
     border: 2px solid #ef4444;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: none; /* Скрыта по умолчанию */
 }
 
 .btn-logout:hover {
     background: #ef4444;
     color: white;
     transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
+}
+
+.btn-logout:active {
+    transform: translateY(0);
+}
+
+/* Показываем кнопку выхода на экране фермы */
+#farm-screen .btn-logout {
+    display: block;
+}
+
+/* Скрываем кнопку выхода на экране входа */
+#auth-screen .btn-logout {
+    display: none;
 }
