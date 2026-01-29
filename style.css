@@ -5,10 +5,12 @@
 }
 
 :root {
-    --primary-color: #ff6b6b;
-    --secondary-color: #4ecdc4;
-    --bg-color: #1a1a2e;
-    --card-bg: #16213e;
+    --primary-color: #4ade80;
+    --secondary-color: #fbbf24;
+    --accent-color: #3b82f6;
+    --danger-color: #ef4444;
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
     --text-color: #f8f9fa;
     --border-radius: 12px;
     --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -17,14 +19,14 @@
 
 body {
     font-family: 'Roboto', sans-serif;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     color: var(--text-color);
     min-height: 100vh;
     padding: 20px;
 }
 
 .container {
-    max-width: 800px;
+    max-width: 1400px;
     margin: 0 auto;
 }
 
@@ -34,8 +36,8 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 20px 0;
-    border-bottom: 2px solid var(--secondary-color);
-    margin-bottom: 40px;
+    border-bottom: 3px solid var(--primary-color);
+    margin-bottom: 30px;
 }
 
 .logo {
@@ -81,6 +83,8 @@ body {
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
     text-align: center;
+    max-width: 500px;
+    margin: 0 auto;
 }
 
 .screen-title {
@@ -140,7 +144,7 @@ body {
 .auth-form input:focus {
     outline: none;
     border-color: var(--secondary-color);
-    box-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
 }
 
 /* Кнопки */
@@ -158,121 +162,320 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(45deg, var(--primary-color), #ff8e8e);
-    color: white;
-    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+    background: linear-gradient(45deg, var(--primary-color), #86efac);
+    color: var(--bg-color);
+    box-shadow: 0 4px 15px rgba(74, 222, 128, 0.4);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+    box-shadow: 0 6px 20px rgba(74, 222, 128, 0.6);
 }
 
 .btn-secondary {
     background: rgba(255, 255, 255, 0.1);
     color: var(--text-color);
-    border: 2px solid var(--secondary-color);
+    border: 2px solid var(--accent-color);
 }
 
 .btn-secondary:hover {
-    background: var(--secondary-color);
+    background: var(--accent-color);
     color: var(--bg-color);
 }
 
-.btn-feed {
-    background: linear-gradient(45deg, #ffd166, #ffec99);
-    color: #333;
-    font-size: 1.2rem;
-    padding: 15px 40px;
-    margin-top: 20px;
-    box-shadow: 0 4px 15px rgba(255, 209, 102, 0.4);
-}
-
-.btn-feed:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 6px 20px rgba(255, 209, 102, 0.6);
-}
-
-/* Карточка динозавра */
-.dino-card {
-    background: var(--card-bg);
-    border-radius: var(--border-radius);
-    padding: 30px;
-    box-shadow: var(--shadow);
-    text-align: center;
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.dino-image-container {
-    margin-bottom: 20px;
-}
-
-.dino-image-container img {
-    max-width: 300px;
-    height: auto;
-    transition: var(--transition);
-    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
-}
-
-.dino-image-container img:hover {
-    transform: scale(1.05);
-}
-
-.dino-name {
-    font-size: 2rem;
-    margin-bottom: 10px;
-    color: var(--secondary-color);
-}
-
-.dino-species {
-    font-size: 1.2rem;
-    margin-bottom: 20px;
-    color: #aaa;
-}
-
-.level-info {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 20px;
+.btn-action {
+    width: 100%;
+    padding: 15px;
     font-size: 1.1rem;
+    margin-top: 10px;
 }
 
-.level-info .label {
+.btn-collect {
+    background: linear-gradient(45deg, var(--secondary-color), #fcd34d);
+    color: var(--bg-color);
+}
+
+.btn-collect:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(251, 191, 36, 0.6);
+}
+
+.btn-gems {
+    background: linear-gradient(45deg, #a855f7, #c084fc);
+    color: white;
+}
+
+.btn-gems:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.6);
+}
+
+.btn-small {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Панель ресурсов */
+.resources-bar {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    margin-bottom: 30px;
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+    box-shadow: var(--shadow);
+    border: 2px solid var(--primary-color);
+}
+
+.resource-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.resource-icon {
+    font-size: 1.5rem;
+}
+
+.resource-label {
+    font-size: 0.9rem;
     color: #888;
 }
 
-.level-info .value {
-    color: var(--primary-color);
+.resource-value {
+    font-weight: 700;
+    color: var(--text-color);
+    font-size: 1.2rem;
+}
+
+/* Макет фермы */
+.farm-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr 300px;
+    gap: 30px;
+}
+
+/* Сайдбар зданий */
+.farm-sidebar {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.sidebar-title {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    color: var(--secondary-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.buildings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.building-item {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: var(--transition);
+    border-left: 3px solid var(--accent-color);
+}
+
+.building-item:hover {
+    background: rgba(0, 0, 0, 0.4);
+    transform: translateX(5px);
+}
+
+.building-icon {
+    font-size: 2rem;
+}
+
+.building-info {
+    flex: 1;
+}
+
+.building-name {
+    font-weight: 700;
+    margin-bottom: 5px;
+    color: var(--text-color);
+}
+
+.building-level {
+    font-size: 0.9rem;
+    color: #888;
+}
+
+.building-collect-btn {
+    margin-left: auto;
+}
+
+/* Основная область фермы */
+.farm-main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.farm-name {
+    font-size: 2rem;
+    color: var(--secondary-color);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.dinosaurs-pen {
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    border: 2px solid var(--danger-color);
+}
+
+.pen-title {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: var(--danger-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Сетка динозавров */
+.dinosaurs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.dinosaur-card {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    transition: var(--transition);
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.dinosaur-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+}
+
+.dinosaur-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dino-image-container {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.dino-image {
+    max-width: 200px;
+    height: auto;
+    transition: var(--transition);
+    filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.5));
+}
+
+.dino-image:hover {
+    transform: scale(1.05);
+}
+
+.dino-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 10px;
+}
+
+.dino-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.dino-rarity {
+    font-size: 1.8rem;
+    line-height: 1;
+}
+
+.dino-species {
+    font-size: 1rem;
+    color: #888;
+    margin-bottom: 10px;
+}
+
+.dino-level {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    font-size: 0.95rem;
+}
+
+.dino-level-label {
+    color: #888;
+}
+
+.dino-level-value {
+    color: var(--secondary-color);
     font-weight: 700;
 }
 
 /* Прогресс бар опыта */
 .xp-bar-container {
-    margin-bottom: 30px;
+    margin-bottom: 15px;
 }
 
 .xp-bar-label {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 10px;
-    font-size: 0.9rem;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
     color: #888;
 }
 
 .xp-bar {
-    height: 20px;
+    height: 12px;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+    border-radius: 6px;
     overflow: hidden;
-    border: 2px solid var(--secondary-color);
+    border: 2px solid var(--primary-color);
 }
 
 .xp-progress {
     height: 100%;
-    background: linear-gradient(90deg, var(--primary-color), #ff8e8e);
-    border-radius: 8px;
+    background: linear-gradient(90deg, var(--primary-color), #86efac);
+    border-radius: 4px;
     transition: width 0.5s ease;
     animation: pulse 2s infinite;
 }
@@ -286,128 +489,156 @@ body {
     }
 }
 
-/* Модальное окно */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
-    animation: fadeIn 0.3s ease;
+/* Статус голода */
+.hunger-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 15px;
 }
 
-.modal.active {
-    display: flex;
+.hunger-status.fed {
+    background: rgba(74, 222, 128, 0.2);
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
 }
 
-.modal-content {
-    background: var(--card-bg);
-    padding: 30px;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    max-width: 400px;
-    width: 90%;
-    text-align: center;
+.hunger-status.hungry {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    animation: pulseRed 2s infinite;
 }
 
-.modal-content h3 {
-    margin-bottom: 20px;
+.hunger-status.hungry_soon {
+    background: rgba(251, 191, 36, 0.2);
     color: var(--secondary-color);
+    border: 1px solid var(--secondary-color);
 }
 
-.modal-content input {
+@keyframes pulseRed {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* Кнопка кормления */
+.feed-btn {
     width: 100%;
     padding: 12px;
-    margin-bottom: 20px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    background: rgba(0, 0, 0, 0.3);
-    color: var(--text-color);
     font-size: 1rem;
+    background: linear-gradient(45deg, var(--primary-color), #86efac);
+    color: var(--bg-color);
 }
 
-.modal-buttons {
+.feed-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 222, 128, 0.6);
+}
+
+.feed-btn:disabled {
+    background: rgba(100, 100, 100, 0.5);
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Панель действий */
+.farm-actions {
     display: flex;
-    gap: 10px;
-    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
 }
 
-/* Сообщения об ошибках */
-.error-message {
-    color: #ff6b6b;
-    margin-top: 15px;
+.actions-title {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    color: var(--accent-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.action-card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--accent-color);
+}
+
+.action-card h4 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    color: var(--text-color);
+}
+
+.action-card p {
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 15px;
+}
+
+.action-status {
+    margin-top: 10px;
     padding: 10px;
-    background: rgba(255, 107, 107, 0.1);
     border-radius: 6px;
+    font-size: 0.9rem;
     display: none;
 }
 
-.error-message.active {
+.action-status.active {
     display: block;
-    animation: shake 0.5s;
 }
 
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
+/* Скелетон загрузки */
+.dinosaur-card.loading {
+    background: rgba(255, 255, 255, 0.05);
+    animation: pulseSkeleton 1.5s infinite;
 }
 
-/* Футер */
-.footer {
-    text-align: center;
-    margin-top: 40px;
-    padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    color: #888;
-    font-size: 0.9rem;
-}
-
-/* Анимации для кнопки кормления */
-@keyframes feedAnimation {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-}
-
-.btn-feed:active {
-    animation: feedAnimation 0.3s;
-}
-
-/* Адаптивность */
-@media (max-width: 600px) {
-    .header {
-        flex-direction: column;
-        gap: 15px;
+@keyframes pulseSkeleton {
+    0%, 100% {
+        opacity: 0.3;
     }
-
-    .logo {
-        font-size: 1.5rem;
-    }
-
-    .auth-container,
-    .dino-card {
-        padding: 20px;
-    }
-
-    .dino-image-container img {
-        max-width: 250px;
-    }
-
-    .tabs {
-        flex-direction: column;
-    }
-
-    .tab-btn {
-        width: 100%;
+    50% {
+        opacity: 0.5;
     }
 }
-/* ========== УВЕДОМЛЕНИЯ ========== */
+
+.dino-image-placeholder {
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    margin: 0 auto 15px;
+}
+
+.dino-info-placeholder {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.skeleton-line {
+    height: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.skeleton-line.short {
+    width: 60%;
+}
+
+.skeleton-line.xshort {
+    width: 40%;
+}
+
+/* Уведомления */
 .notifications-container {
     position: fixed;
     top: 20px;
@@ -469,35 +700,35 @@ body {
 }
 
 .notification.success {
-    border-left-color: #4ade80;
+    border-left-color: var(--primary-color);
 }
 
 .notification.success .notification-icon {
-    color: #4ade80;
+    color: var(--primary-color);
 }
 
 .notification.info {
-    border-left-color: #3b82f6;
+    border-left-color: var(--accent-color);
 }
 
 .notification.info .notification-icon {
-    color: #3b82f6;
+    color: var(--accent-color);
 }
 
 .notification.warning {
-    border-left-color: #fbbf24;
+    border-left-color: var(--secondary-color);
 }
 
 .notification.warning .notification-icon {
-    color: #fbbf24;
+    color: var(--secondary-color);
 }
 
 .notification.error {
-    border-left-color: #ef4444;
+    border-left-color: var(--danger-color);
 }
 
 .notification.error .notification-icon {
-    color: #ef4444;
+    color: var(--danger-color);
 }
 
 .notification-content {
@@ -537,178 +768,48 @@ body {
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* Анимация для кнопки кормления при успехе */
-@keyframes successPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-}
-
-.btn-feed.success {
-    animation: successPulse 0.5s ease;
-    background: linear-gradient(45deg, #4ade80, #86efac);
-}
-
-/* Модальное окно подтверждения (для важных действий) */
-.confirm-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    z-index: 2000;
-    justify-content: center;
-    align-items: center;
-    animation: fadeIn 0.3s ease;
-}
-
-.confirm-modal.active {
-    display: flex;
-}
-
-.confirm-modal-content {
-    background: var(--card-bg);
-    padding: 30px;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    max-width: 450px;
-    width: 90%;
+/* Футер */
+.footer {
     text-align: center;
-    border: 2px solid var(--secondary-color);
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: #888;
+    font-size: 0.9rem;
 }
 
-.confirm-modal-icon {
-    font-size: 3rem;
-    margin-bottom: 15px;
-}
-
-.confirm-modal h3 {
-    margin-bottom: 15px;
-    color: var(--secondary-color);
-    font-size: 1.5rem;
-}
-
-.confirm-modal p {
-    margin-bottom: 25px;
-    color: #aaa;
-    line-height: 1.6;
-}
-
-.confirm-modal-buttons {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-}
-
-.confirm-modal-btn {
-    padding: 12px 30px;
-    border: none;
-    border-radius: 6px;
-    font-family: 'Roboto', sans-serif;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: var(--transition);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.confirm-modal-btn.confirm {
-    background: linear-gradient(45deg, var(--primary-color), #ff8e8e);
-    color: white;
-}
-
-.confirm-modal-btn.cancel {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-color);
-    border: 2px solid var(--secondary-color);
-}
-
-.confirm-modal-btn:hover {
-    transform: translateY(-2px);
-}
-
-/* Адаптивность уведомлений */
-@media (max-width: 600px) {
-    .notifications-container {
-        top: 15px;
-        right: 15px;
-        left: 15px;
-        align-items: center;
+/* Адаптивность */
+@media (max-width: 1200px) {
+    .farm-layout {
+        grid-template-columns: 1fr;
     }
     
-    .notification {
-        width: 100%;
-        max-width: none;
+    .farm-sidebar,
+    .farm-actions {
+        grid-column: 1;
     }
 }
 
-/* ========== ТАЙМЕР КУЛДАУНА ========== */
-.cooldown-timer {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    padding: 12px;
-    margin: 15px 0;
-    font-size: 1.1rem;
-    color: #fbbf24;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border-left: 3px solid #fbbf24;
-    transition: var(--transition);
-}
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        gap: 15px;
+    }
 
-.cooldown-timer.active {
-    animation: pulseTimer 2s infinite;
-}
+    .logo {
+        font-size: 1.5rem;
+    }
 
-@keyframes pulseTimer {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
+    .resources-bar {
+        flex-direction: column;
+        gap: 10px;
+    }
 
-#timer-value {
-    font-weight: 700;
-    font-family: 'Press Start 2P', cursive;
-    color: #ff8e8e;
-}
+    .dinosaurs-grid {
+        grid-template-columns: 1fr;
+    }
 
-/* Анимация кнопки при кулдауне */
-.btn-feed.cooldown {
-    background: linear-gradient(45deg, #6b7280, #9ca3af);
-    cursor: not-allowed;
-    transform: none !important;
-    box-shadow: none !important;
-}
-
-.btn-feed.cooldown:hover {
-    transform: none !important;
-}
-
-.btn-hunt {
-    background: linear-gradient(45deg, #ef4444, #f87171);
-    color: white;
-    font-size: 1.2rem;
-    padding: 15px 40px;
-    margin-top: 15px;
-    margin-bottom: 15px;
-    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-}
-
-.btn-hunt:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
-}
-
-.btn-hunt:disabled {
-    background: linear-gradient(45deg, #6b7280, #9ca3af);
-    cursor: not-allowed;
-    transform: none !important;
-    box-shadow: none !important;
-}
-
-.btn-hunt.success {
-    animation: successPulse 0.5s ease;
-    background: linear-gradient(45deg, #4ade80, #86efac);
+    .auth-container {
+        padding: 20px;
+    }
 }
