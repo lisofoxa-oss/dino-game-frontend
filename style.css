@@ -829,7 +829,7 @@ body {
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.3s ease;
-    display: none; /* Скрыта по умолчанию */
+    /* display: none; ← УДАЛИ ЭТУ СТРОКУ ТОЖЕ! */
 }
 
 .btn-logout:hover {
@@ -841,14 +841,4 @@ body {
 
 .btn-logout:active {
     transform: translateY(0);
-}
-
-/* Показываем кнопку выхода на экране фермы */
-#farm-screen .btn-logout {
-    display: block;
-}
-
-/* Скрываем кнопку выхода на экране входа */
-#auth-screen .btn-logout {
-    display: none;
 }
