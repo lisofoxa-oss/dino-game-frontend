@@ -268,7 +268,7 @@ function displayBuildings(buildings) {
     
     // Добавляем обработчики кнопок
     document.querySelectorAll('.building-collect-btn').forEach(btn => {
-        btn.addEventListener('click', () => collectBuilding(btn.dataset.id));
+        btn.addEventListener('click', () => collectBuilding(btn.closest('.building-item').dataset.id));
     });
 }
 
@@ -338,7 +338,7 @@ function displayDinosaurs(dinosaurs) {
                 </div>
                 
                 <div class="dino-image-container">
-                    <img src="${imagePath}" alt="${dino.speciesName}" class="dino-image" onerror="this.src='images/compy/compy-1.png'">
+                    <img src="${imagePath}" alt="${dino.speciesName}" class="dino-image" onerror="this.style.display='none'">
                 </div>
                 
                 <button class="btn btn-action feed-btn" ${dino.hungerStatus !== 'hungry' ? 'disabled' : ''}>
