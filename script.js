@@ -198,38 +198,28 @@ function updateUserInfo() {
 }
 
 function logout() {
-    console.log('🔄 Начинаем выход из аккаунта...');
-    
-    // Очищаем состояние
+    // Очищаем данные
     authToken = null;
     currentUser = null;
-    
-    console.log('🗑️ Очищаем состояние...');
-    
-    // Очищаем локальное хранилище
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
-    
-    console.log('🗑️ Очищаем localStorage...');
     
     // Останавливаем автообновление
     if (refreshInterval) {
         clearInterval(refreshInterval);
         refreshInterval = null;
-        console.log('⏱️ Остановлен автообновление');
     }
     
-    // Показываем экран входа
-    showAuthScreen();
+    // Переключаем экраны
+    document.getElementById('auth-screen')?.classList.add('active');
+    document.getElementById('farm-screen')?.classList.remove('active');
     
-    console.log('✅ Экран входа показан');
+    // Скрываем кнопку выхода
+    document.getElementById('logout-btn').style.display = 'none';
     
-    // Показываем уведомление
+    // Уведомление
     showNotification('Вы успешно вышли из аккаунта', 'info', 'До встречи!');
-    
-    console.log('✅ Уведомление показано');
 }
-
 // ========== ЭКРАНЫ ==========
 function showAuthScreen() {
     console.log('🔄 Показываем экран входа');
