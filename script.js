@@ -245,31 +245,48 @@ function displayFarm(data) {
 }
 
 function displayBuildings(buildings) {
-    const container = document.getElementById('buildings-list');
-    if (!container) return;
-    
-    if (buildings.length === 0) {
-        container.innerHTML = '<div class="building-item"><div class="building-info">Нет зданий</div></div>';
-        return;
-    }
-    
-    container.innerHTML = buildings.map(building => `
-        <div class="building-item" data-id="${building.id}">
-            <div class="building-icon">${building.icon}</div>
-            <div class="building-info">
-                <div class="building-name">${building.displayName}</div>
-                <div class="building-level">Уровень: ${building.level}</div>
-            </div>
-            <button class="btn btn-small building-collect-btn" ${building.canCollect ? '' : 'disabled'}>
-                ${building.canCollect ? 'Собрать' : '⏳ Ждём...'}
-            </button>
-        </div>
-    `).join('');
-    
-    // Добавляем обработчики кнопок
-    document.querySelectorAll('.building-collect-btn').forEach(btn => {
-        btn.addEventListener('click', () => collectBuilding(btn.closest('.building-item').dataset.id));
+  const container = document.getElementById('buildings-list');
+  if (!container) return;
+  
+  if (buildings.length === 0) {
+    container.innerHTML = '<div class="building-item"><div class="building-info">Нет зданий</div></div>';
+    return;
+  }
+  
+  container.innerHTML = buildings.map(building => `
+    <div class="building-item" data-id="${building.id}">
+      <div class="building-icon">${building.icon}</div>
+      <div class="building-info">
+        <div class="building-name">${building.displayName}</div>
+        <div class="building-level">Уровень: ${building.level}</div>
+      </div>
+      <button class="btn btn-small building-collect-btn" data-building-id="${building.id}" ${building.canCollect ? '' : 'disabled'}>
+        ${building.canCollect ? 'Собрать' : '⏳ Ждём...'}
+      </button>
+    </div>
+  `).join('');
+  
+  // Добавляем обработчики кнопок
+  document.querySelectorAll('.building-collect-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const buildingId = e.currentTarget.dataset.buildingId;
+      collectBuilding(buildingId);
     });
+  });
+}
+
+// В конце setupEventListeners добавь:
+function setupEventListeners() {
+  // ... существующий код ...
+  
+  // Заглушки для будущих функций
+  document.querySelector('.btn-secondary')?.addEventListener('click', () => {
+    showNotification('🥚 Инкубатор будет доступен в следующем обновлении!', 'info', 'Скоро!');
+  });
+  
+  document.querySelector('.btn-gems')?.addEventListener('click', () => {
+    showNotification('🎁 Сундук удачи будет доступен в следующем обновлении!', 'info', 'Скоро!');
+  });
 }
 
 function displayDinosaurs(dinosaurs) {
