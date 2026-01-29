@@ -210,11 +210,23 @@ function logout() {
 function showAuthScreen() {
     document.getElementById('auth-screen')?.classList.add('active');
     document.getElementById('farm-screen')?.classList.remove('active');
+    
+    // Скрываем кнопку выхода
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.style.display = 'none';
+    }
 }
 
 function showFarmScreen() {
     document.getElementById('auth-screen')?.classList.remove('active');
     document.getElementById('farm-screen')?.classList.add('active');
+    
+    // Показываем кнопку выхода
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.style.display = 'block';
+    }
 }
 
 // ========== ЗАГРУЗКА ФЕРМЫ ==========
