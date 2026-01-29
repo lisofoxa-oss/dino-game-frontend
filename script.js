@@ -197,24 +197,60 @@ function updateUserInfo() {
 }
 
 function logout() {
+    console.log('🔄 Начинаем выход из аккаунта...');
+    
+    // Очищаем состояние
     authToken = null;
     currentUser = null;
-    if (refreshInterval) clearInterval(refreshInterval);
+    
+    console.log('🗑️ Очищаем состояние...');
+    
+    // Очищаем локальное хранилище
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
+    
+    console.log('🗑️ Очищаем localStorage...');
+    
+    // Останавливаем автообновление
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+        console.log('⏱️ Остановлен автообновление');
+    }
+    
+    // Показываем экран входа
     showAuthScreen();
+    
+    console.log('✅ Экран входа показан');
+    
+    // Показываем уведомление
     showNotification('Вы успешно вышли из аккаунта', 'info', 'До встречи!');
+    
+    console.log('✅ Уведомление показано');
 }
 
 // ========== ЭКРАНЫ ==========
 function showAuthScreen() {
-    document.getElementById('auth-screen')?.classList.add('active');
-    document.getElementById('farm-screen')?.classList.remove('active');
+    console.log('🔄 Показываем экран входа');
+    
+    const authScreen = document.getElementById('auth-screen');
+    const farmScreen = document.getElementById('farm-screen');
+    
+    if (authScreen) {
+        authScreen.classList.add('active');
+        console.log('✅ Экран входа активирован');
+    }
+    
+    if (farmScreen) {
+        farmScreen.classList.remove('active');
+        console.log('✅ Экран фермы деактивирован');
+    }
     
     // Скрываем кнопку выхода
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.style.display = 'none';
+        console.log('✅ Кнопка выхода скрыта');
     }
 }
 
