@@ -36,6 +36,7 @@ function setupEventListeners() {
     
     // Кнопка выхода
     document.getElementById('logout-btn')?.addEventListener('click', () => {
+        console.log('🖱️ Клик по кнопке выхода');
         logout();
     });
     
