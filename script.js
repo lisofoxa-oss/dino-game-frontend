@@ -34,6 +34,18 @@ function setupEventListeners() {
     // Кнопка сбора ресурсов
     document.getElementById('collect-all-btn')?.addEventListener('click', collectAllResources);
     
+    // Кнопка выхода
+    document.getElementById('logout-btn')?.addEventListener('click', logout);
+    
+    // Заглушки для будущих функций
+    document.querySelector('.btn-secondary')?.addEventListener('click', () => {
+        showNotification('🥚 Инкубатор будет доступен в следующем обновлении!', 'info', 'Скоро!');
+    });
+    
+    document.querySelector('.btn-gems')?.addEventListener('click', () => {
+        showNotification('🎁 Сундук удачи будет доступен в следующем обновлении!', 'info', 'Скоро!');
+    });
+    
     // Закрытие модалки по клику вне
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal')) {
@@ -168,11 +180,17 @@ function saveAuthData(token, user) {
 
 function updateUserInfo() {
     const userInfo = document.getElementById('user-info');
-    if (currentUser && userInfo) {
-        userInfo.innerHTML = `
-            <span>👤 ${currentUser.username}</span>
-            <button onclick="logout()" class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.8rem; margin-left: 10px;">Выйти</button>
-        `;
+    const logoutBtn = document.getElementById('logout-btn');
+    
+    if (currentUser && userInfo && logoutBtn) {
+        // Показываем имя пользователя
+        userInfo.innerHTML = `<span>👤 ${currentUser.username}</span>`;
+        
+        // Показываем кнопку выхода
+        logoutBtn.style.display = 'block';
+    } else if (logoutBtn) {
+        // Скрываем кнопку выхода
+        logoutBtn.style.display = 'none';
     }
 }
 
